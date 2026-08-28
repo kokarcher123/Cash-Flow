@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buku Kas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --bg:#EDEFE7;
+    --surface:#FBFBF7;
+    --ink:#1F2A22;
+    --ink-soft:#5D6A5F;
+    --line:#D6D8C7;
+    --income:#1F6E52;
+    --income-bg:#E4EFE7;
+    --expense:#7A2E3B;
+    --expense-bg:#F3E4E4;
+    --transfer:#3E5A72;
+    --transfer-bg:#E3EAF0;
+    --accent:#B8912A;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:520px;
+    margin:0 auto;
+    padding:20px 16px 100px;
+    min-height:100vh;
+  }
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:16px;
+  }
+  header h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:22px;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  header .tagline{
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .header-actions{display:flex;gap:8px;}
+  .icon-btn{
+    border:1px solid var(--line);
+    background:var(--surface);
+    color:var(--ink-soft);
+    font-size:12px;
+    font-family:inherit;
+    padding:6px 12px;
+    border-radius:99px;
+    cursor:pointer;
+  }
+  .icon-btn:hover{color:var(--ink);border-color:var(--ink-soft);}
+  .file-sync{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:var(--surface);
+    border:1px dashed var(--line);
+    border-radius:12px;
+    padding:10px 14px;
+    margin-bottom:14px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .file-sync.connected{border-style:solid;border-color:var(--income);background:var(--income-bg);color:var(--income);}
+  .file-sync .icon-btn{flex:none;}
+  .drive-sync{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:var(--surface);
+    border:1px dashed var(--line);
+    border-radius:12px;
+    padding:10px 14px;
+    margin-bottom:14px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .drive-sync.connected{border-style:solid;border-color:var(--transfer);background:var(--transfer-bg);color:var(--transfer);}
+  .drive-sync .icon-btn{flex:none;}
+  .settings-panel{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px 16px;
+    margin-bottom:14px;
+  }
+  .settings-help{font-size:11.5px;color:var(--ink-soft);margin-bottom:12px;line-height:1.5;}
+
+  /* Balance receipt card */
+  .balance-card{
+    background:var(--surface);
+    border-radius:var(--radius) var(--radius) 0 0;
+    padding:22px 22px 26px;
+    position:relative;
+    box-shadow:0 1px 2px rgba(0,0,0,0.04);
+  }
+  .balance-label{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+  }
+  .balance-amount{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:34px;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:-0.01em;
+  }
+  .balance-sub{
+    display:flex;
+    gap:18px;
+    margin-top:14px;
+  }
+  .balance-sub div{font-size:12px;color:var(--ink-soft);}
+  .balance-sub strong{
+    display:block;
+    font-size:15px;
+    font-variant-numeric:tabular-nums;
+    margin-top:2px;
+  }
+  .balance-sub .in strong{color:var(--income);}
+  .balance-sub .out strong{color:var(--expense);}
+
+  .account-split{
+    display:flex;
+    gap:22px;
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px dashed var(--line);
+  }
+  .account-split div{font-size:11px;color:var(--ink-soft);}
+  .account-split strong{
+    display:block;
+    font-size:15px;
+    font-variant-numeric:tabular-nums;
+    margin-top:2px;
+    color:var(--ink);
+  }
+
+  .perforation{
+    height:14px;
+    background:
+      radial-gradient(circle at 8px 0, transparent 7px, var(--surface) 7.5px) top/16px 14px repeat-x;
+    position:relative;
+  }
+  .perforation::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      radial-gradient(circle at 8px 14px, transparent 7px, var(--bg) 7.5px) bottom/16px 14px repeat-x;
+  }
+
+  /* Chart */
+  .chart-card{
+    background:var(--surface);
+    border-radius:0 0 var(--radius) var(--radius);
+    padding:16px 22px 20px;
+    margin-bottom:20px;
+    box-shadow:0 1px 2px rgba(0,0,0,0.04);
+  }
+  .chart-title{font-size:11px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;}
+  .chart-row{display:flex;align-items:flex-end;gap:8px;height:70px;}
+  .chart-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+  .chart-bars{display:flex;align-items:flex-end;gap:2px;height:100%;}
+  .chart-bar{width:7px;border-radius:2px 2px 0 0;min-height:2px;}
+  .chart-col .mlabel{font-size:9px;color:var(--ink-soft);margin-top:4px;}
+
+  /* Filters */
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .chip{
+    border:1px solid var(--line);
+    background:var(--surface);
+    color:var(--ink-soft);
+    font-size:12.5px;
+    padding:7px 13px;
+    border-radius:99px;
+    cursor:pointer;
+    font-family:inherit;
+    transition:all .15s;
+  }
+  .chip.active{
+    background:var(--ink);
+    color:var(--surface);
+    border-color:var(--ink);
+  }
+  .range-inputs{
+    display:flex;
+    gap:8px;
+    width:100%;
+    margin-top:2px;
+  }
+  .range-inputs input{
+    flex:1;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:8px 10px;
+    font-family:inherit;
+    font-size:13px;
+    background:var(--surface);
+    color:var(--ink);
+  }
+  .search-wrap{margin-bottom:16px;}
+  .search-wrap input{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:10px 12px;
+    font-family:inherit;
+    font-size:13.5px;
+    background:var(--surface);
+    color:var(--ink);
+  }
+  .search-wrap input::placeholder{color:var(--ink-soft);}
+
+  /* Transaction list */
+  .date-group{margin-bottom:6px;}
+  .date-header{
+    font-size:12px;
+    color:var(--ink-soft);
+    font-weight:600;
+    padding:14px 2px 6px;
+  }
+  .tx{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--surface);
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:8px;
+    cursor:pointer;
+    border:1px solid transparent;
+  }
+  .tx:active{border-color:var(--line);}
+  .tx-left{display:flex;align-items:center;gap:11px;min-width:0;}
+  .tx-dot{
+    width:36px;height:36px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;flex:none;
+  }
+  .tx-dot.in{background:var(--income-bg);color:var(--income);}
+  .tx-dot.out{background:var(--expense-bg);color:var(--expense);}
+  .tx-dot.transfer{background:var(--transfer-bg);color:var(--transfer);}
+  .tx-info{min-width:0;}
+  .tx-cat{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tx-account{
+    display:inline-block;
+    font-size:10px;
+    font-weight:600;
+    padding:2px 7px;
+    border-radius:99px;
+    background:var(--bg);
+    color:var(--ink-soft);
+    margin-left:7px;
+    vertical-align:middle;
+  }
+  .toolbar-accounts{margin-bottom:14px;}
+  .tx-note{font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
+  .tx-amount{font-size:14.5px;font-weight:600;font-variant-numeric:tabular-nums;flex:none;padding-left:8px;}
+  .tx-amount.in{color:var(--income);}
+  .tx-amount.out{color:var(--expense);}
+  .tx-amount.transfer{color:var(--transfer);}
+
+  .empty{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--ink-soft);
+  }
+  .empty .big{font-family:'Fraunces',serif;font-size:19px;color:var(--ink);margin-bottom:6px;}
+
+  /* FAB */
+  .fab{
+    position:fixed;
+    right:20px;
+    bottom:24px;
+    width:56px;height:56px;
+    border-radius:50%;
+    background:var(--ink);
+    color:var(--surface);
+    border:none;
+    font-size:26px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.25);
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    max-width:520px;
+    margin:0 auto;
+  }
+
+  /* Modal */
+  .overlay{
+    position:fixed;inset:0;
+    background:rgba(20,24,20,0.4);
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    z-index:50;
+  }
+  .overlay.open{display:flex;}
+  .sheet{
+    background:var(--surface);
+    width:100%;
+    max-width:520px;
+    border-radius:20px 20px 0 0;
+    padding:20px 20px 26px;
+    max-height:88vh;
+    overflow-y:auto;
+  }
+  .sheet h2{
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    margin:0 0 16px;
+  }
+  .seg{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    margin-bottom:14px;
+  }
+  .seg button{
+    flex:1;
+    border:none;
+    background:var(--surface);
+    padding:10px;
+    font-family:inherit;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .seg button.active.in{background:var(--income-bg);color:var(--income);}
+  .seg button.active.out{background:var(--expense-bg);color:var(--expense);}
+  .seg button.active.transfer{background:var(--transfer-bg);color:var(--transfer);}
+  .seg button.active{background:var(--bg);color:var(--ink);}
+  .transfer-row{display:flex;align-items:flex-end;gap:8px;margin-bottom:14px;}
+  .transfer-row .field{flex:1;margin-bottom:0;}
+  .transfer-row select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-family:inherit;font-size:14.5px;background:var(--bg);color:var(--ink);}
+  .swap-btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;width:42px;height:44px;font-size:16px;cursor:pointer;color:var(--ink-soft);flex:none;}
+  .field{margin-bottom:14px;}
+  .field label{
+    display:block;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:5px;
+  }
+  .field input, .field textarea{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:11px 12px;
+    font-family:inherit;
+    font-size:14.5px;
+    background:var(--bg);
+    color:var(--ink);
+  }
+  .field textarea{resize:none;height:56px;}
+  .sheet-actions{display:flex;gap:10px;margin-top:6px;}
+  .btn{
+    flex:1;
+    border:none;
+    border-radius:10px;
+    padding:13px;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn-primary{background:var(--ink);color:var(--surface);}
+  .btn-danger{background:var(--expense-bg);color:var(--expense);}
+  .btn-ghost{background:var(--bg);color:var(--ink-soft);}
+  .msg{text-align:center;padding:40px;color:var(--ink-soft);font-size:13px;}
+  .form-error{
+    background:var(--expense-bg);
+    color:var(--expense);
+    font-size:13px;
+    padding:10px 12px;
+    border-radius:10px;
+    margin-bottom:14px;
+  }
+  .toast{
+    position:fixed;
+    left:50%;
+    bottom:96px;
+    transform:translateX(-50%) translateY(10px);
+    background:var(--ink);
+    color:var(--surface);
+    font-size:13px;
+    padding:10px 18px;
+    border-radius:99px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s, transform .2s;
+    z-index:100;
+    white-space:nowrap;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .storage-warning{
+    background:var(--expense-bg);
+    color:var(--expense);
+    font-size:12.5px;
+    padding:10px 14px;
+    border-radius:12px;
+    margin-bottom:14px;
+    display:none;
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div>
+      <h1>Cash Flow For Jo</h1>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="btnExport" title="Ekspor data (cadangan)">Ekspor</button>
+      <button class="icon-btn" id="btnImport" title="Impor data dari cadangan">Impor</button>
+      <button class="icon-btn" id="btnSettings" title="Pengaturan Google Drive">⚙</button>
+      <input type="file" id="fileImport" accept="application/json" style="display:none;">
+    </div>
+  </header>
+
+  <div class="drive-sync" id="driveSync">
+    <span id="driveSyncStatus">Belum tersambung ke Google Drive</span>
+    <button class="icon-btn" id="btnConnectDrive">Sambungkan Drive</button>
+  </div>
+
+  <div class="settings-panel" id="settingsPanel" style="display:none;">
+    <div class="field">
+      <label for="fClientId">Google OAuth Client ID</label>
+      <input type="text" id="fClientId" placeholder="xxxxxxxxxx.apps.googleusercontent.com">
+    </div>
+    <div class="settings-help">Dapatkan Client ID dari Google Cloud Console (lihat panduan yang saya berikan di chat). Client ID ini disimpan hanya di browser ini.</div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" id="btnCloseSettings">Tutup</button>
+      <button type="button" class="btn btn-primary" id="btnSaveClientId">Simpan</button>
+    </div>
+  </div>
+
+  <div class="file-sync" id="fileSync">
+    <span id="fileSyncStatus">Belum tersambung ke file di PC</span>
+    <button class="icon-btn" id="btnConnectFile">Sambungkan File</button>
+  </div>
+
+  <div class="storage-warning" id="storageWarning">Penyimpanan lokal tidak tersedia di browser ini (mungkin mode privat/incognito). Transaksi tidak akan tersimpan permanen.</div>
+
+  <div class="balance-card">
+    <div class="balance-label">Saldo</div>
+    <div class="balance-amount" id="balanceAmount">Rp0</div>
+    <div class="balance-sub">
+      <div class="in">Pemasukan<strong id="totalIn">Rp0</strong></div>
+      <div class="out">Pengeluaran<strong id="totalOut">Rp0</strong></div>
+    </div>
+    <div class="account-split">
+      <div>Saldo Tunai<strong id="balanceCash">Rp0</strong></div>
+      <div>Saldo Bank<strong id="balanceBank">Rp0</strong></div>
+    </div>
+  </div>
+  <div class="perforation"></div>
+  <div class="chart-card">
+    <div class="chart-title">6 bulan terakhir</div>
+    <div class="chart-row" id="chartRow"></div>
+  </div>
+
+  <div class="toolbar" id="toolbar">
+    <button class="chip active" data-filter="all">Semua</button>
+    <button class="chip" data-filter="thisMonth">Bulan ini</button>
+    <button class="chip" data-filter="lastMonth">Bulan lalu</button>
+    <button class="chip" data-filter="custom">Rentang</button>
+    <div class="range-inputs" id="rangeInputs" style="display:none;">
+      <input type="date" id="rangeFrom">
+      <input type="date" id="rangeTo">
+    </div>
+  </div>
+
+  <div class="toolbar toolbar-accounts" id="toolbarAccounts">
+    <button class="chip active" data-account="all">Semua Akun</button>
+    <button class="chip" data-account="cash">Tunai</button>
+    <button class="chip" data-account="bank">Bank</button>
+  </div>
+
+  <div class="search-wrap">
+    <input type="text" id="searchInput" placeholder="Cari kategori atau catatan...">
+  </div>
+
+  <div id="listWrap">
+    <div class="msg">Memuat data...</div>
+  </div>
+</div>
+
+<button class="fab" id="fabAdd">+</button>
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h2 id="sheetTitle">Tambah Transaksi</h2>
+    <form id="txForm">
+      <div class="seg">
+        <button type="button" class="active in" id="segIn" data-type="in">Pemasukan</button>
+        <button type="button" class="out" id="segOut" data-type="out">Pengeluaran</button>
+        <button type="button" class="transfer" id="segTransfer" data-type="transfer">Transfer</button>
+      </div>
+      <div class="seg" id="accountSegWrap">
+        <button type="button" class="active" id="segCash" data-account="cash">Tunai</button>
+        <button type="button" id="segBank" data-account="bank">Bank</button>
+      </div>
+      <div class="transfer-row" id="transferRow" style="display:none;">
+        <div class="field">
+          <label for="fFromAccount">Dari</label>
+          <select id="fFromAccount"><option value="bank">Bank</option><option value="cash">Tunai</option></select>
+        </div>
+        <button type="button" id="btnSwapAccounts" class="swap-btn" title="Tukar arah">⇄</button>
+        <div class="field">
+          <label for="fToAccount">Ke</label>
+          <select id="fToAccount"><option value="cash">Tunai</option><option value="bank">Bank</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fAmount">Jumlah (Rp)</label>
+        <input type="number" id="fAmount" inputmode="decimal" min="0" step="1" placeholder="0">
+      </div>
+      <div class="field">
+        <label for="fCategory" id="fCategoryLabel">Kategori</label>
+        <input type="text" id="fCategory" list="categoryList" placeholder="cth. Makan, Gaji, Transport">
+        <datalist id="categoryList"></datalist>
+      </div>
+      <div class="field">
+        <label for="fDate">Tanggal</label>
+        <input type="date" id="fDate">
+      </div>
+      <div class="field">
+        <label for="fNote">Catatan (opsional)</label>
+        <textarea id="fNote" placeholder="Catatan tambahan..."></textarea>
+      </div>
+      <div class="form-error" id="formError" style="display:none;"></div>
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" id="btnCancel">Batal</button>
+        <button type="button" class="btn btn-danger" id="btnDelete" style="display:none;">Hapus</button>
+        <button type="submit" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  let transactions = [];
+  let filterMode = 'all';
+  let accountFilter = 'all';
+  let editingId = null;
+  const accountLabel = {cash:'Tunai', bank:'Bank'};
+  function transferDefaultLabel(from,to){
+    if(from==='bank' && to==='cash') return 'Tarik Tunai';
+    if(from==='cash' && to==='bank') return 'Setor Tunai';
+    return 'Transfer';
+  }
+
+  const fmt = (n) => 'Rp' + Math.round(n).toLocaleString('id-ID');
+  const todayISO = () => new Date().toISOString().slice(0,10);
+
+  let toastTimer;
+  function showToast(msg){
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> el.classList.remove('show'), 2200);
+  }
+
+  const STORAGE_KEY = 'buku_kas_transactions';
+  let storageOk = true;
+  try{
+    const test = '__test__';
+    localStorage.setItem(test, '1');
+    localStorage.removeItem(test);
+  }catch(e){
+    storageOk = false;
+    document.getElementById('storageWarning').style.display = 'block';
+  }
+
+  // --- Koneksi file otomatis ke PC (File System Access API) ---
+  let fileHandle = null;
+  const fileSyncSupported = 'showSaveFilePicker' in window;
+
+  function openHandleDB(){
+    return new Promise((resolve,reject)=>{
+      const req = indexedDB.open('bukukas-db', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('handles');
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function idbGet(key){
+    const db = await openHandleDB();
+    return new Promise((resolve,reject)=>{
+      const tx = db.transaction('handles','readonly');
+      const req = tx.objectStore('handles').get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function idbSet(key, val){
+    const db = await openHandleDB();
+    return new Promise((resolve,reject)=>{
+      const tx = db.transaction('handles','readwrite');
+      tx.objectStore('handles').put(val, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  function updateFileSyncUI(name, connected){
+    const box = document.getElementById('fileSync');
+    const status = document.getElementById('fileSyncStatus');
+    const btn = document.getElementById('btnConnectFile');
+    if(connected){
+      box.classList.add('connected');
+      status.textContent = 'Tersambung: ' + name;
+      btn.textContent = 'Putuskan';
+    } else if(name){
+      box.classList.remove('connected');
+      status.textContent = 'Terputus dari: ' + name;
+      btn.textContent = 'Sambungkan Ulang';
+    } else {
+      box.classList.remove('connected');
+      status.textContent = fileSyncSupported ? 'Belum tersambung ke file di PC' : 'Fitur ini butuh Chrome/Edge terbaru';
+      btn.textContent = 'Sambungkan File';
+    }
+    btn.disabled = !fileSyncSupported;
+  }
+
+  async function writeToFile(){
+    if(!fileHandle) return;
+    try{
+      const writable = await fileHandle.createWritable();
+      await writable.write(JSON.stringify(transactions, null, 2));
+      await writable.close();
+    }catch(e){
+      console.error('Gagal menulis ke file PC', e);
+      showToast('Gagal menulis ke file PC. Coba sambungkan ulang.');
+    }
+  }
+
+  async function verifyPermission(handle, readWrite){
+    const opts = readWrite ? {mode:'readwrite'} : {};
+    if((await handle.queryPermission(opts)) === 'granted') return true;
+    try{
+      if((await handle.requestPermission(opts)) === 'granted') return true;
+    }catch(e){}
+    return false;
+  }
+
+  async function connectFile(){
+    if(!fileSyncSupported){
+      showToast('Fitur ini hanya tersedia di Chrome atau Edge.');
+      return;
+    }
+    if(fileHandle){
+      fileHandle = null;
+      await idbSet('transactions-file', null);
+      updateFileSyncUI(null, false);
+      showToast('Koneksi file diputuskan.');
+      return;
+    }
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'buku-kas-data.json',
+        types: [{description:'JSON', accept:{'application/json':['.json']}}]
+      });
+      const granted = await verifyPermission(handle, true);
+      if(!granted){ showToast('Izin akses file ditolak.'); return; }
+
+      try{
+        const file = await handle.getFile();
+        const text = await file.text();
+        if(text && text.trim()){
+          const data = JSON.parse(text);
+          if(Array.isArray(data) && data.length){
+            const useExisting = confirm('File ini sudah berisi data. Pakai data dari file ini? (Batal = timpa file dengan data yang tampil sekarang)');
+            if(useExisting){
+              transactions = data;
+              saveData();
+              render();
+            }
+          }
+        }
+      }catch(e){ /* file kosong/baru, lanjut saja */ }
+
+      fileHandle = handle;
+      await idbSet('transactions-file', handle);
+      updateFileSyncUI(handle.name, true);
+      await writeToFile();
+      showToast('Berhasil tersambung ke ' + handle.name);
+    }catch(err){
+      if(err.name !== 'AbortError') showToast('Gagal menyambungkan file.');
+    }
+  }
+
+  async function tryReconnect(){
+    if(!fileSyncSupported){ updateFileSyncUI(null, false); return; }
+    try{
+      const handle = await idbGet('transactions-file');
+      if(handle){
+        const granted = await verifyPermission(handle, true).catch(()=>false);
+        if(granted){
+          fileHandle = handle;
+          updateFileSyncUI(handle.name, true);
+        } else {
+          updateFileSyncUI(handle.name, false);
+        }
+      } else {
+        updateFileSyncUI(null, false);
+      }
+    }catch(e){
+      updateFileSyncUI(null, false);
+    }
+  }
+
+  document.getElementById('btnConnectFile').addEventListener('click', connectFile);
+  // --- Selesai bagian koneksi file ---
+
+  // --- Google Drive sync ---
+  const DRIVE_FILE_NAME = 'buku-kas-data.json';
+  let gTokenClient = null;
+  let gAccessToken = null;
+  let gDriveFileId = localStorage.getItem('gdrive_file_id') || null;
+
+  function updateDriveUI(connected, msg){
+    const box = document.getElementById('driveSync');
+    const status = document.getElementById('driveSyncStatus');
+    const btn = document.getElementById('btnConnectDrive');
+    if(connected){
+      box.classList.add('connected');
+      status.textContent = msg || 'Tersambung ke Google Drive';
+      btn.textContent = 'Putuskan';
+    } else {
+      box.classList.remove('connected');
+      status.textContent = msg || 'Belum tersambung ke Google Drive';
+      btn.textContent = 'Sambungkan Drive';
+    }
+  }
+
+  function initGis(){
+    const clientId = localStorage.getItem('gdrive_client_id');
+    if(!clientId || typeof google === 'undefined' || !google.accounts) return;
+    gTokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'https://www.googleapis.com/auth/drive.file',
+      callback: async (resp) => {
+        if(resp.error){ showToast('Gagal masuk Google. ('+resp.error+')'); return; }
+        gAccessToken = resp.access_token;
+        await onDriveConnected();
+      }
+    });
+  }
+
+  async function driveApi(url, options){
+    options = options || {};
+    options.headers = Object.assign({Authorization:'Bearer '+gAccessToken}, options.headers||{});
+    const res = await fetch(url, options);
+    if(res.status === 401){ gAccessToken = null; updateDriveUI(false, 'Sesi Google berakhir, sambungkan ulang'); throw new Error('unauthorized'); }
+    return res;
+  }
+
+  async function driveFindOrCreateFile(){
+    if(gDriveFileId){
+      const check = await driveApi(`https://www.googleapis.com/drive/v3/files/${gDriveFileId}?fields=id,trashed`);
+      if(check.ok){
+        const info = await check.json();
+        if(!info.trashed) return gDriveFileId;
+      }
+      gDriveFileId = null;
+    }
+    const q = encodeURIComponent(`name='${DRIVE_FILE_NAME}' and trashed=false`);
+    const res = await driveApi(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)`);
+    const data = await res.json();
+    if(data.files && data.files.length) return data.files[0].id;
+
+    const metadata = {name: DRIVE_FILE_NAME, mimeType:'application/json'};
+    const boundary = 'bukukasboundary';
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`+
+      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(transactions)}\r\n`+
+      `--${boundary}--`;
+    const createRes = await driveApi('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+      method:'POST',
+      headers:{'Content-Type':`multipart/related; boundary=${boundary}`},
+      body
+    });
+    const createData = await createRes.json();
+    return createData.id;
+  }
+
+  async function driveDownload(fileId){
+    const res = await driveApi(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+    if(!res.ok) throw new Error('download gagal');
+    return res.json();
+  }
+
+  async function driveUpload(){
+    if(!gDriveFileId || !gAccessToken) return;
+    try{
+      await driveApi(`https://www.googleapis.com/upload/drive/v3/files/${gDriveFileId}?uploadType=media`, {
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(transactions)
+      });
+    }catch(e){ console.error('Gagal unggah ke Drive', e); }
+  }
+
+  async function onDriveConnected(){
+    try{
+      gDriveFileId = await driveFindOrCreateFile();
+      localStorage.setItem('gdrive_file_id', gDriveFileId);
+      const remoteData = await driveDownload(gDriveFileId);
+      if(Array.isArray(remoteData) && remoteData.length){
+        if(transactions.length && JSON.stringify(remoteData) !== JSON.stringify(transactions)){
+          const useRemote = confirm('Ditemukan data transaksi di Google Drive. Pakai data dari Drive? (Batal = timpa Drive dengan data di perangkat ini sekarang)');
+          if(useRemote){ transactions = remoteData; localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions)); render(); }
+          else { await driveUpload(); }
+        } else if(!transactions.length){
+          transactions = remoteData; localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions)); render();
+        }
+      } else if(transactions.length){
+        await driveUpload();
+      }
+      updateDriveUI(true);
+      showToast('Tersambung ke Google Drive.');
+    }catch(e){
+      console.error(e);
+      updateDriveUI(false, 'Gagal menyambungkan Google Drive');
+      showToast('Gagal menyambungkan Google Drive.');
+    }
+  }
+
+  function connectDrive(){
+    if(gAccessToken){
+      gAccessToken = null;
+      updateDriveUI(false);
+      showToast('Terputus dari Google Drive.');
+      return;
+    }
+    const clientId = localStorage.getItem('gdrive_client_id');
+    if(!clientId){
+      showToast('Masukkan Client ID Google dulu di Pengaturan (⚙).');
+      document.getElementById('settingsPanel').style.display = 'block';
+      return;
+    }
+    if(!gTokenClient) initGis();
+    if(!gTokenClient){ showToast('Google belum siap, coba muat ulang halaman.'); return; }
+    gTokenClient.requestAccessToken();
+  }
+
+  document.getElementById('btnConnectDrive').addEventListener('click', connectDrive);
+  document.getElementById('btnSettings').addEventListener('click', ()=>{
+    const panel = document.getElementById('settingsPanel');
+    document.getElementById('fClientId').value = localStorage.getItem('gdrive_client_id') || '';
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  });
+  document.getElementById('btnCloseSettings').addEventListener('click', ()=>{
+    document.getElementById('settingsPanel').style.display = 'none';
+  });
+  document.getElementById('btnSaveClientId').addEventListener('click', ()=>{
+    const val = document.getElementById('fClientId').value.trim();
+    if(!val){ showToast('Client ID kosong.'); return; }
+    localStorage.setItem('gdrive_client_id', val);
+    initGis();
+    document.getElementById('settingsPanel').style.display = 'none';
+    showToast('Client ID disimpan.');
+  });
+  // --- Selesai Google Drive sync ---
+
+  function loadData(){
+    try{
+      const raw = storageOk ? localStorage.getItem(STORAGE_KEY) : null;
+      transactions = raw ? JSON.parse(raw) : [];
+    }catch(e){
+      transactions = [];
+    }
+    render();
+  }
+
+  function saveData(){
+    if(storageOk){
+      try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+      }catch(e){
+        console.error('Gagal menyimpan data', e);
+        showToast('Gagal menyimpan. Ruang penyimpanan browser mungkin penuh.');
+      }
+    }
+    if(fileHandle) writeToFile();
+    if(gAccessToken && gDriveFileId) driveUpload();
+    if(!storageOk && !fileHandle){
+      showToast('Penyimpanan tidak tersedia di browser ini.');
+      return false;
+    }
+    return true;
+  }
+
+  function monthBounds(offset){
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + offset);
+    const start = new Date(d.getFullYear(), d.getMonth(), 1);
+    const end = new Date(d.getFullYear(), d.getMonth()+1, 0);
+    return [start.toISOString().slice(0,10), end.toISOString().slice(0,10)];
+  }
+
+  function getFiltered(){
+    let list = transactions.slice();
+    if(filterMode === 'thisMonth'){
+      const [s,e] = monthBounds(0);
+      list = list.filter(t => t.date >= s && t.date <= e);
+    } else if(filterMode === 'lastMonth'){
+      const [s,e] = monthBounds(-1);
+      list = list.filter(t => t.date >= s && t.date <= e);
+    } else if(filterMode === 'custom'){
+      const from = document.getElementById('rangeFrom').value;
+      const to = document.getElementById('rangeTo').value;
+      if(from) list = list.filter(t => t.date >= from);
+      if(to) list = list.filter(t => t.date <= to);
+    }
+    if(accountFilter !== 'all'){
+      list = list.filter(t => t.account === accountFilter);
+    }
+    const q = document.getElementById('searchInput').value.trim().toLowerCase();
+    if(q){
+      list = list.filter(t =>
+        t.category.toLowerCase().includes(q) ||
+        (t.note||'').toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }
+
+  function renderSummary(list){
+    const income = list.filter(t=>t.type==='in').reduce((a,t)=>a+t.amount,0);
+    const expense = list.filter(t=>t.type==='out').reduce((a,t)=>a+t.amount,0);
+    document.getElementById('balanceAmount').textContent = fmt(income-expense);
+    document.getElementById('totalIn').textContent = fmt(income);
+    document.getElementById('totalOut').textContent = fmt(expense);
+
+    const acctBalance = (acc) => list.filter(t=>t.account===acc)
+      .reduce((a,t)=> a + ((t.type==='in'||t.type==='transfer_in') ? t.amount : -t.amount), 0);
+    document.getElementById('balanceCash').textContent = fmt(acctBalance('cash'));
+    document.getElementById('balanceBank').textContent = fmt(acctBalance('bank'));
+  }
+
+  function renderChart(){
+    const months = [];
+    for(let i=5;i>=0;i--){
+      const d = new Date();
+      d.setDate(1);
+      d.setMonth(d.getMonth()-i);
+      months.push({y:d.getFullYear(), m:d.getMonth(), label:d.toLocaleDateString('id-ID',{month:'short'})});
+    }
+    const sums = months.map(mo=>{
+      let inc=0, exp=0;
+      transactions.forEach(t=>{
+        const td = new Date(t.date);
+        if(td.getFullYear()===mo.y && td.getMonth()===mo.m){
+          if(t.type==='in') inc+=t.amount; else if(t.type==='out') exp+=t.amount;
+        }
+      });
+      return {...mo, inc, exp};
+    });
+    const max = Math.max(1, ...sums.map(s=>Math.max(s.inc,s.exp)));
+    const row = document.getElementById('chartRow');
+    row.innerHTML = sums.map(s=>`
+      <div class="chart-col">
+        <div class="chart-bars">
+          <div class="chart-bar" style="height:${(s.inc/max*100)||0}%;background:var(--income);"></div>
+          <div class="chart-bar" style="height:${(s.exp/max*100)||0}%;background:var(--expense);"></div>
+        </div>
+        <div class="mlabel">${s.label}</div>
+      </div>
+    `).join('');
+  }
+
+  function getDisplayList(rawList){
+    const seen = new Set();
+    const out = [];
+    rawList.forEach(t=>{
+      if(t.type==='transfer_out' || t.type==='transfer_in'){
+        if(seen.has(t.transferId)) return;
+        seen.add(t.transferId);
+        const legOut = transactions.find(x=>x.transferId===t.transferId && x.type==='transfer_out');
+        const legIn = transactions.find(x=>x.transferId===t.transferId && x.type==='transfer_in');
+        if(legOut && legIn){
+          out.push({
+            display:'transfer',
+            transferId: t.transferId,
+            fromAccount: legOut.account,
+            toAccount: legIn.account,
+            amount: legOut.amount,
+            category: legOut.category,
+            note: legOut.note,
+            date: legOut.date,
+            createdAt: legOut.createdAt
+          });
+        }
+      } else {
+        out.push(Object.assign({display:'normal'}, t));
+      }
+    });
+    return out;
+  }
+
+  function renderList(){
+    const filtered = getFiltered();
+    renderSummary(filtered);
+    const list = getDisplayList(filtered);
+    const wrap = document.getElementById('listWrap');
+    if(list.length===0){
+      wrap.innerHTML = `<div class="empty"><div class="big">Belum ada transaksi</div>Tambahkan transaksi pertamamu lewat tombol + di bawah.</div>`;
+      return;
+    }
+    list.sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+    const groups = {};
+    list.forEach(t=>{ (groups[t.date] = groups[t.date]||[]).push(t); });
+    const dates = Object.keys(groups).sort().reverse();
+    wrap.innerHTML = dates.map(date=>{
+      const label = new Date(date+'T00:00:00').toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+      const rows = groups[date].map(t=>{
+        if(t.display==='transfer'){
+          return `
+        <div class="tx" data-transfer-id="${t.transferId}">
+          <div class="tx-left">
+            <div class="tx-dot transfer">⇄</div>
+            <div class="tx-info">
+              <div class="tx-cat">${escapeHtml(t.category)}</div>
+              <div class="tx-note">${accountLabel[t.fromAccount]} → ${accountLabel[t.toAccount]}${t.note ? ' · '+escapeHtml(t.note) : ''}</div>
+            </div>
+          </div>
+          <div class="tx-amount transfer">⇄ ${fmt(t.amount)}</div>
+        </div>
+      `;
+        }
+        return `
+        <div class="tx" data-id="${t.id}">
+          <div class="tx-left">
+            <div class="tx-dot ${t.type}">${t.type==='in' ? '↓' : '↑'}</div>
+            <div class="tx-info">
+              <div class="tx-cat">${escapeHtml(t.category)}<span class="tx-account">${accountLabel[t.account] || 'Tunai'}</span></div>
+              ${t.note ? `<div class="tx-note">${escapeHtml(t.note)}</div>` : ''}
+            </div>
+          </div>
+          <div class="tx-amount ${t.type}">${t.type==='in'?'+':'-'}${fmt(t.amount)}</div>
+        </div>
+      `;
+      }).join('');
+      return `<div class="date-group"><div class="date-header">${label}</div>${rows}</div>`;
+    }).join('');
+
+    wrap.querySelectorAll('.tx').forEach(el=>{
+      el.addEventListener('click', ()=> {
+        if(el.dataset.transferId) openTransferModal(el.dataset.transferId);
+        else openModal(el.dataset.id);
+      });
+    });
+  }
+
+  function escapeHtml(s){
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function updateCategoryList(){
+    const cats = [...new Set(transactions.map(t=>t.category))];
+    document.getElementById('categoryList').innerHTML = cats.map(c=>`<option value="${escapeHtml(c)}">`).join('');
+  }
+
+  function render(){
+    renderChart();
+    renderList();
+    updateCategoryList();
+  }
+
+  // Toolbar filters
+  document.getElementById('toolbar').addEventListener('click',(e)=>{
+    const btn = e.target.closest('.chip');
+    if(!btn) return;
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    filterMode = btn.dataset.filter;
+    document.getElementById('rangeInputs').style.display = filterMode==='custom' ? 'flex':'none';
+    renderList();
+  });
+  document.getElementById('toolbarAccounts').addEventListener('click',(e)=>{
+    const btn = e.target.closest('.chip');
+    if(!btn) return;
+    document.querySelectorAll('#toolbarAccounts .chip').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    accountFilter = btn.dataset.account;
+    renderList();
+  });
+  document.getElementById('rangeFrom').addEventListener('change', renderList);
+  document.getElementById('rangeTo').addEventListener('change', renderList);
+  document.getElementById('searchInput').addEventListener('input', renderList);
+
+  // Modal handling
+  const overlay = document.getElementById('overlay');
+  const form = document.getElementById('txForm');
+  let currentType = 'in';
+  let currentAccount = 'cash';
+
+  function setType(type){
+    currentType = type;
+    document.getElementById('segIn').classList.toggle('active', type==='in');
+    document.getElementById('segOut').classList.toggle('active', type==='out');
+    document.getElementById('segTransfer').classList.toggle('active', type==='transfer');
+    const isTransfer = type==='transfer';
+    document.getElementById('accountSegWrap').style.display = isTransfer ? 'none' : 'flex';
+    document.getElementById('transferRow').style.display = isTransfer ? 'flex' : 'none';
+    document.getElementById('fCategoryLabel').textContent = isTransfer ? 'Keterangan (opsional)' : 'Kategori';
+    document.getElementById('fCategory').placeholder = isTransfer ? transferDefaultLabel(document.getElementById('fFromAccount').value, document.getElementById('fToAccount').value) : 'cth. Makan, Gaji, Transport';
+  }
+  function setAccount(account){
+    currentAccount = account;
+    document.getElementById('segCash').classList.toggle('active', account==='cash');
+    document.getElementById('segBank').classList.toggle('active', account==='bank');
+  }
+  function updateTransferHint(){
+    const from = document.getElementById('fFromAccount').value;
+    const to = document.getElementById('fToAccount').value;
+    document.getElementById('fCategory').placeholder = transferDefaultLabel(from, to);
+  }
+  document.getElementById('segIn').addEventListener('click', ()=>setType('in'));
+  document.getElementById('segOut').addEventListener('click', ()=>setType('out'));
+  document.getElementById('segTransfer').addEventListener('click', ()=>setType('transfer'));
+  document.getElementById('segCash').addEventListener('click', ()=>setAccount('cash'));
+  document.getElementById('segBank').addEventListener('click', ()=>setAccount('bank'));
+  document.getElementById('fFromAccount').addEventListener('change', updateTransferHint);
+  document.getElementById('fToAccount').addEventListener('change', updateTransferHint);
+  document.getElementById('btnSwapAccounts').addEventListener('click', ()=>{
+    const fromEl = document.getElementById('fFromAccount');
+    const toEl = document.getElementById('fToAccount');
+    const f = fromEl.value, t = toEl.value;
+    fromEl.value = t; toEl.value = f;
+    updateTransferHint();
+  });
+
+  let editingTransferId = null;
+  function openModal(id){
+    editingId = id || null;
+    editingTransferId = null;
+    if(id){
+      const t = transactions.find(x=>x.id===id);
+      document.getElementById('sheetTitle').textContent = 'Edit Transaksi';
+      setType(t.type);
+      setAccount(t.account || 'cash');
+      document.getElementById('fAmount').value = t.amount;
+      document.getElementById('fCategory').value = t.category;
+      document.getElementById('fDate').value = t.date;
+      document.getElementById('fNote').value = t.note || '';
+      document.getElementById('btnDelete').style.display = 'block';
+    } else {
+      document.getElementById('sheetTitle').textContent = 'Tambah Transaksi';
+      form.reset();
+      setType('in');
+      setAccount('cash');
+      document.getElementById('fFromAccount').value = 'bank';
+      document.getElementById('fToAccount').value = 'cash';
+      document.getElementById('fDate').value = todayISO();
+      document.getElementById('btnDelete').style.display = 'none';
+    }
+    overlay.classList.add('open');
+  }
+  function openTransferModal(transferId){
+    const legOut = transactions.find(x=>x.transferId===transferId && x.type==='transfer_out');
+    const legIn = transactions.find(x=>x.transferId===transferId && x.type==='transfer_in');
+    if(!legOut || !legIn) return;
+    editingId = null;
+    editingTransferId = transferId;
+    document.getElementById('sheetTitle').textContent = 'Edit Transfer';
+    setType('transfer');
+    document.getElementById('fFromAccount').value = legOut.account;
+    document.getElementById('fToAccount').value = legIn.account;
+    updateTransferHint();
+    document.getElementById('fAmount').value = legOut.amount;
+    document.getElementById('fCategory').value = legOut.category;
+    document.getElementById('fDate').value = legOut.date;
+    document.getElementById('fNote').value = legOut.note || '';
+    document.getElementById('btnDelete').style.display = 'block';
+    overlay.classList.add('open');
+  }
+  function closeModal(){
+    overlay.classList.remove('open');
+    editingId = null;
+    editingTransferId = null;
+  }
+  document.getElementById('fabAdd').addEventListener('click', ()=>openModal(null));
+  document.getElementById('btnCancel').addEventListener('click', closeModal);
+  overlay.addEventListener('click',(e)=>{ if(e.target===overlay) closeModal(); });
+
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const errorBox = document.getElementById('formError');
+    const amount = parseFloat(document.getElementById('fAmount').value);
+    const date = document.getElementById('fDate').value;
+    const note = document.getElementById('fNote').value.trim();
+
+    if(currentType === 'transfer'){
+      const fromAccount = document.getElementById('fFromAccount').value;
+      const toAccount = document.getElementById('fToAccount').value;
+      if(!amount || amount<=0 || !date || fromAccount===toAccount){
+        errorBox.textContent = fromAccount===toAccount ? 'Akun asal dan tujuan tidak boleh sama.' : 'Lengkapi jumlah dan tanggal terlebih dahulu.';
+        errorBox.style.display = 'block';
+        return;
+      }
+      errorBox.style.display = 'none';
+      const category = document.getElementById('fCategory').value.trim() || transferDefaultLabel(fromAccount, toAccount);
+
+      if(editingTransferId){
+        const legOut = transactions.find(x=>x.transferId===editingTransferId && x.type==='transfer_out');
+        const legIn = transactions.find(x=>x.transferId===editingTransferId && x.type==='transfer_in');
+        Object.assign(legOut, {account:fromAccount, amount, category, date, note});
+        Object.assign(legIn, {account:toAccount, amount, category, date, note});
+      } else {
+        const transferId = 'tr_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+        const stamp = Date.now();
+        transactions.push({
+          id: 'tx_'+stamp+'_'+Math.random().toString(36).slice(2,7),
+          type:'transfer_out', account: fromAccount, amount, category, date, note, transferId, createdAt: stamp
+        });
+        transactions.push({
+          id: 'tx_'+stamp+'_'+Math.random().toString(36).slice(2,7),
+          type:'transfer_in', account: toAccount, amount, category, date, note, transferId, createdAt: stamp
+        });
+      }
+      const ok = await saveData();
+      closeModal();
+      render();
+      if(ok) showToast('Transfer tersimpan.');
+      return;
+    }
+
+    const category = document.getElementById('fCategory').value.trim();
+    if(!amount || amount<=0 || !category || !date){
+      errorBox.textContent = 'Lengkapi jumlah, kategori, dan tanggal terlebih dahulu.';
+      errorBox.style.display = 'block';
+      return;
+    }
+    errorBox.style.display = 'none';
+
+    if(editingId){
+      const t = transactions.find(x=>x.id===editingId);
+      Object.assign(t, {type:currentType, account:currentAccount, amount, category, date, note});
+    } else {
+      transactions.push({
+        id: 'tx_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
+        type: currentType, account: currentAccount, amount, category, date, note,
+        createdAt: Date.now()
+      });
+    }
+    const ok = await saveData();
+    closeModal();
+    render();
+    if(ok) showToast('Transaksi tersimpan.');
+  });
+
+  document.getElementById('btnDelete').addEventListener('click', async ()=>{
+    if(editingTransferId){
+      transactions = transactions.filter(t=>t.transferId!==editingTransferId);
+      const ok = await saveData();
+      closeModal();
+      render();
+      if(ok) showToast('Transfer dihapus.');
+      return;
+    }
+    if(!editingId) return;
+    transactions = transactions.filter(t=>t.id!==editingId);
+    const ok = await saveData();
+    closeModal();
+    render();
+    if(ok) showToast('Transaksi dihapus.');
+  });
+
+  document.getElementById('btnExport').addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(transactions, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'buku-kas-cadangan-' + todayISO() + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Cadangan diunduh.');
+  });
+
+  document.getElementById('btnImport').addEventListener('click', ()=>{
+    document.getElementById('fileImport').click();
+  });
+  document.getElementById('fileImport').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const data = JSON.parse(reader.result);
+        if(!Array.isArray(data)) throw new Error('format tidak sesuai');
+        transactions = data;
+        saveData();
+        render();
+        showToast('Data berhasil diimpor.');
+      }catch(err){
+        showToast('File cadangan tidak valid.');
+      }
+      e.target.value = '';
+    };
+    reader.readAsText(file);
+  });
+
+  loadData();
+  tryReconnect();
+  if(localStorage.getItem('gdrive_client_id')){
+    updateDriveUI(false, 'Klik untuk sambungkan ulang Google Drive');
+    setTimeout(initGis, 300);
+  }
+})();
+</script>
+</body>
+</html>

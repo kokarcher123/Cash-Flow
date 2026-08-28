@@ -1,0 +1,32 @@
+[
+  {
+    "id": "tx_1787819008587_we7am",
+    "type": "in",
+    "account": "bank",
+    "amount": 57000,
+    "category": "Sisa",
+    "date": "2026-08-27",
+    "note": "Sisa Uang",
+    "createdAt": 1787819008587
+  },
+  {
+    "id": "tx_1787819034092_7ynhk",
+    "type": "out",
+    "account": "bank",
+    "amount": 17000,
+    "category": "Makan",
+    "date": "2026-08-27",
+    "note": "Cimol, soda nipis madu",
+    "createdAt": 1787819034092
+  },
+  {
+    "id": "tx_1787819152468_04ofi",
+    "type": "in",
+    "account": "cash",
+    "amount": 100000,
+    "category": "Cash",
+    "date": "2026-08-27",
+    "note": "",
+    "createdAt": 1787819152468
+  }
+]
